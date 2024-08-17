@@ -9,6 +9,7 @@ namespace Server.Data
     public class ServerSecretData
     {
         private static string _hashSalt { get; set; } = "RoleGameHashSalt";
+        private static string _baseUrl { get; set; } = "https://localhost";
         private static string _serverKey { get; set; } = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("RoleGameSecretKey")).ToString();
 
         public static string GetSalt()
@@ -19,6 +20,10 @@ namespace Server.Data
         public static string GetSecurityKey()
         {
             return _serverKey;
+        }
+        public static string GetBaseUrl()
+        {
+            return _baseUrl;
         }
 
         public static string ComputeHash(string input)

@@ -9,12 +9,20 @@ namespace Server.Data;
 public class DataBaseConnection : DbContext
 {
     public DbSet<UserData> Users { get; set; }
-    public DbSet<AuthorizationTokens> AuthorizationTokens { get; set; }
-    public DbSet<Roles> Roles { get; set; }
-    public DbSet<Chats> Chats { get; set; }
+    public DbSet<AuthorizationToken> AuthorizationTokens { get; set; }
+    public DbSet<RecoveryCodes> RecoveryCodes { get; set; }
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<RoomChat> RoomChat { get; set; }
+    public DbSet<PrivateChat> PrivateChat { get; set; }
     public DbSet<Message> Message { get; set; }
+    public DbSet<Message> PrivateMessage { get; set; }
+    public DbSet<Inventory> Inventory { get; set; }
     public DbSet<DBItems> Items { get; set; }
     public DbSet<Item> Item { get; set; }
+    public DbSet<ChatsFilterWords> ChatsFilterWords { get; set; }
+    public DbSet<Stats> Stats { get; set; }
+    public DbSet<Room> Room { get; set; }
+    public DbSet<RoomUsers> RoomUsers { get; set; }
 
     public DataBaseConnection()
     {

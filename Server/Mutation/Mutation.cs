@@ -3,6 +3,7 @@ using HotChocolate.Subscriptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Data.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace GraphQLServer
@@ -35,13 +36,13 @@ namespace GraphQLServer
                     d_registrationdate = DateOnly.FromDateTime(DateTime.Today),
                 };
 
-                var role = db.Roles.FirstOrDefault(q => q.c_devname == roleName);
+                var role = db.Roles.FirstOrDefault(q => q.c_dev_name == roleName);
                 if (role != null)
                     usr.f_role = (Guid)role.id;
 
-                var newToken = new AuthorizationTokens();
+                var newToken = new AuthorizationToken();
                 newToken.c_token = new JwtSecurityTokenHandler().WriteToken(ServerSecretData.GenerateNewToken(usr.id.ToString()));
-                newToken.c_hashsum = ServerSecretData.ComputeHash(newToken.c_token);
+                newToken.c_hash = ServerSecretData.ComputeHash(newToken.c_token);
                 usr.f_authorizationtoken = (Guid)newToken.id;
 
                 await db.AuthorizationTokens.AddAsync(newToken);
@@ -69,14 +70,67 @@ namespace GraphQLServer
                 if (authorizationToken == null) throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
                 var recivedTokenHash = ServerSecretData.ComputeHash(oldToken);
-                if (recivedTokenHash != authorizationToken.c_hashsum)
+                if (recivedTokenHash != authorizationToken.c_hash)
                     throw new ArgumentException("CORRUPTED_TOKEN_DETECTED_PROBLEM");
 
 
                 authorizationToken.c_token = new JwtSecurityTokenHandler().WriteToken(ServerSecretData.GenerateNewToken(user.id.ToString()));
-                authorizationToken.c_hashsum = ServerSecretData.ComputeHash(authorizationToken.c_token);
+                authorizationToken.c_hash = ServerSecretData.ComputeHash(authorizationToken.c_token);
                 await db.SaveChangesAsync();
                 return authorizationToken.c_token;
+            }
+        }
+
+        public async Task<bool> PasswordRecovery(string email, string code, string newPassword)
+        {
+            using (var db = new DataBaseConnection())
+            {
+                var user = await db.Users.FirstOrDefaultAsync(u => u.c_email == email);
+                if (user == null)
+                    throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
+
+                var recoveryCode = await db.RecoveryCodes.FirstOrDefaultAsync(u => u.c_email == email);
+                if (recoveryCode == null)
+                    throw new ArgumentException("RECOVERY_CODE_NOT_FOUND_PROBLEM");
+
+                if(!recoveryCode.n_code.ToString().Equals(code))
+                    throw new ArgumentException("RECOVERY_CODE_NOT_CORRECT_PROBLEM");
+
+                if(DateTime.UtcNow > recoveryCode.d_expiration_time)
+                    throw new ArgumentException("RECOVERY_CODE_WAS_EXPIRED_PROBLEM");
+
+                user.c_password = ServerSecretData.ComputeHash(newPassword);
+                await db.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        [Authorize]
+        public async Task<bool> RefreshPassword(string oldPassword, string newPassword)
+        {
+            var token = Helpers.GetTokenFromHeader(_httpContextAccessor);
+            var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
+            if (jwtToken == null) 
+                throw new ArgumentException("AUTH_TOKEN_PROBLEM");
+
+            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+            if (claim == null) 
+                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
+
+            using (var db = new DataBaseConnection())
+            {
+                var user = await db.Users.FirstOrDefaultAsync(u => u.id.ToString() == claim.Value);
+                if (user == null)
+                    throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
+                
+                var oldPasswordHash = ServerSecretData.ComputeHash(oldPassword);
+                if (oldPasswordHash != user.c_password)
+                    throw new ArgumentException("OLD_PASSWORD_NOT_CORRECT_PROBLEM");
+
+
+                user.c_password = ServerSecretData.ComputeHash(newPassword);
+                await db.SaveChangesAsync();
+                return true;
             }
         }
 
@@ -89,20 +143,57 @@ namespace GraphQLServer
             }
             using (var db = new DataBaseConnection())
             {
-                var chat = await db.Chats.FirstOrDefaultAsync(q => q.f_firstuser == firstuserId && q.f_seconduser == seconduserId);
+                var chat = await db.PrivateChat.FirstOrDefaultAsync(q => q.f_firstuser == firstuserId && q.f_seconduser == seconduserId);
 
                 if (chat == null)
                 {
-                    chat = new Chats
+                    chat = new PrivateChat
                     {
                         id = Guid.NewGuid(),
                         f_firstuser = firstuserId,
                         f_seconduser = seconduserId
                     };
-                    db.Chats.Add(chat);
+                    db.PrivateChat.Add(chat);
                     await db.SaveChangesAsync();
                 }
                 return (Guid)chat.id;
+            };
+        }
+        [Authorize]
+        public async Task<Guid> CreateRoom(CreateRoom room)
+        {
+            if (room.f_owner_id == Guid.Empty)
+            {
+                throw new ArgumentException("EMPTY_OWNER_ID_PROBLEM");
+            }
+            using (var db = new DataBaseConnection())
+            {
+                var user = await db.Users.FirstOrDefaultAsync(q => q.id == room.f_owner_id);
+                if(user == null)
+                    throw new ArgumentException("EMPTY_USER_NOT_EXIST");
+
+                var newRoom = new Room()
+                {
+                    id = Guid.NewGuid(),
+                    c_name = room.c_name,
+                    c_description = room.c_description,
+                    f_owner_id = room.f_owner_id,
+                    n_size = 5,
+                    f_game = null,
+                };
+
+                var roomUsers = new RoomUsers()
+                {
+                    id = Guid.NewGuid(),
+                    f_room_id = newRoom.id,
+                    f_user_id = room.f_owner_id,
+                    b_is_master = true,
+                };
+                await db.Room.AddAsync(newRoom);
+                await db.RoomUsers.AddAsync(roomUsers);
+                await db.SaveChangesAsync();
+
+                return newRoom.id;
             };
         }
 

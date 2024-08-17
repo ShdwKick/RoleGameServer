@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.WebSockets;
 using Server.Data;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GraphQLServer
 {
@@ -62,8 +63,18 @@ namespace GraphQLServer
                 .AddInMemorySubscriptions()
                 .AddAuthorization();
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(5000);
+                options.ListenAnyIP(5001, listenOptions =>
+                {
+                    listenOptions.UseHttps();
+                });
+            });
+
             var app = builder.Build();
 
+            app.UseHttpsRedirection();
             // Использование аутентификации и авторизации
             app.UseAuthentication();
             app.UseAuthorization();
