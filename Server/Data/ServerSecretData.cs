@@ -11,6 +11,8 @@ namespace Server.Data
         private static string _hashSalt { get; set; } = "RoleGameHashSalt";
         private static string _baseUrl { get; set; } = "https://localhost";
         private static string _serverKey { get; set; } = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("RoleGameSecretKey")).ToString();
+        private static string _issuer = "RoleGameServer";
+        private static string _audience = "RoleGameClient";
 
         public static string GetSalt()
         {
@@ -25,42 +27,13 @@ namespace Server.Data
         {
             return _baseUrl;
         }
-
-        public static string ComputeHash(string input)
+        public static string GetIssuer()
         {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input + _hashSalt); 
-                byte[] hashBytes = sha256.ComputeHash(inputBytes);
-
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    builder.Append(hashBytes[i].ToString("x2")); 
-                }
-                return builder.ToString();
-            }
+            return _baseUrl;
         }
-
-
-        public static JwtSecurityToken GenerateNewToken(string userId)
+        public static string GetAudience()
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ServerSecretData.GetSecurityKey()));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                 new Claim(JwtRegisteredClaimNames.Sub, userId),
-                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
-            var newToken = new JwtSecurityToken(
-                issuer: "RoleGameServer",
-                audience: "RoleGameClient",
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(480),
-                signingCredentials: credentials
-            );
-            return newToken;
+            return _baseUrl;
         }
     }
 }

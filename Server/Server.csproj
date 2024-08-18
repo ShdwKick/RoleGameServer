@@ -9,13 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="HotChocolate" Version="14.0.0-p.39" />
-    <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.0" />
+    <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
     <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="14.0.0-p.39" />
-    <PackageReference Include="HotChocolate.AspNetCore.Playground" Version="10.5.5" />
-    <PackageReference Include="HotChocolate.Subscriptions.InMemory" Version="13.9.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
+    <PackageReference Include="HotChocolate.Subscriptions.InMemory" Version="13.9.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
   </ItemGroup>
 
 </Project>

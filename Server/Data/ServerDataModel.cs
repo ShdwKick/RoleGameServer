@@ -1,5 +1,12 @@
 ﻿namespace Server.Data
 {
+
+    public enum RoomUserChangeType
+    {
+        Add = 0,
+        Remove = 1,
+    }
+
     public class UserData
     {
         public Guid? id { get; set; }
@@ -73,7 +80,7 @@
         public string c_correctedword { get; set; }
     }
 
-
+    
     public class Message
     {
         public Guid? id { get; set; }
@@ -174,5 +181,12 @@
         public int n_intelligence { get; set; }
         public int n_wisdom { get; set; }
         public int n_charisma { get; set; }
+    }
+
+    public class RoomUserListChange
+    {
+        public Guid userId { get; set; }
+        public Guid roomId { get; set; }
+        public RoomUserChangeType ChangeType { get; set; }
     }
 }
