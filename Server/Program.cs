@@ -27,9 +27,9 @@ namespace GraphQLServer
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = securityKey,
                         ValidateIssuer = true,
-                        ValidIssuer = "RoleGameServer",
+                        ValidIssuer = ServerSecretData.GetIssuer(),
                         ValidateAudience = true,
-                        ValidAudience = "RoleGameCient",
+                        ValidAudience = ServerSecretData.GetAudience(),
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.FromMinutes(1)
                     };
@@ -75,7 +75,7 @@ namespace GraphQLServer
             var app = builder.Build();
 
             app.UseHttpsRedirection();
-            // Использование аутентификации и авторизации
+
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseWebSockets();

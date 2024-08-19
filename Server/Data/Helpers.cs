@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Server.Data.Helpers
@@ -67,6 +68,25 @@ namespace Server.Data.Helpers
                 signingCredentials: credentials
             );
             return newToken;
+        }
+
+        public static async Task<UserData> GetUserFromHeader(DataBaseConnection db, IHttpContextAccessor httpContextAccessor)
+        {
+            var token = GetTokenFromHeader(httpContextAccessor);
+            var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
+            if (jwtToken == null)
+                throw new ArgumentException("AUTH_TOKEN_PROBLEM");
+
+            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+            if (claim == null)
+                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
+
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.id.ToString() == claim.Value);
+            if (user == null)
+                throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
+
+            return user;
         }
     }
 }

@@ -105,19 +105,7 @@ namespace GraphQLServer
         [Authorize]
         public async Task<bool> RefreshPassword(string oldPassword, string newPassword)
         {
-            var token = Helpers.GetTokenFromHeader(_httpContextAccessor);
-            var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
-            if (jwtToken == null)
-                throw new ArgumentException("AUTH_TOKEN_PROBLEM");
-
-            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            if (claim == null)
-                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
-
-
-            var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(u => u.id.ToString() == claim.Value);
-            if (user == null)
-                throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
+            var user = await Helpers.GetUserFromHeader(_dataBaseConnection, _httpContextAccessor);
 
             var oldPasswordHash = Helpers.ComputeHash(oldPassword);
             if (oldPasswordHash != user.c_password)
@@ -196,6 +184,11 @@ namespace GraphQLServer
             var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
             if (jwtToken == null)
                 throw new ArgumentException("AUTH_TOKEN_PROBLEM");
+
+            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+            if (claim == null)
+                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
+
             if (roomId == Guid.Empty)
             {
                 throw new ArgumentException("EMPTY_ROOM_ID_PROBLEM");
@@ -206,9 +199,7 @@ namespace GraphQLServer
             if (room == null)
                 throw new ArgumentException("ROOM_NOT_FOUND_PROBLEM");
 
-            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            if (claim == null)
-                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
+            
 
             if (Guid.Parse(claim.Value) != room.f_owner_id)
                 throw new ArgumentException("USER_NOT_OWNER_PROBLEM");
@@ -225,18 +216,7 @@ namespace GraphQLServer
         [Authorize]
         public async Task ChangeRoomUsersList(Guid userId, Guid roomId, bool IsNeedAdd, [Service] ITopicEventSender eventSender, CancellationToken cancellationToken)
         {
-            var token = Helpers.GetTokenFromHeader(_httpContextAccessor);
-            var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
-            if (jwtToken == null)
-                throw new ArgumentException("AUTH_TOKEN_PROBLEM");
-
-            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            if (claim == null)
-                throw new ArgumentException("AUTH_TOKEN_CLAIMS_PROBLEM");
-
-            var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.id == userId);
-            if (user == null)
-                throw new ArgumentException("USER_NOT_EXIST_PROBLEM");
+            var userData = await Helpers.GetUserFromHeader(_dataBaseConnection, _httpContextAccessor);
 
             var room = await _dataBaseConnection.Room.FirstOrDefaultAsync(q => q.id == roomId);
             if (room == null)
@@ -244,7 +224,7 @@ namespace GraphQLServer
 
             if (IsNeedAdd)
             {
-                if (Guid.Parse(claim.Value) != userId)
+                if (userData.id != userId)
                     throw new ArgumentException("USER_CANT_BE_ADDED_TO_ROOM_PROBLEM");
 
                 var roomUsers = new RoomUsers()
@@ -259,7 +239,7 @@ namespace GraphQLServer
             }
             else
             {
-                if (Guid.Parse(claim.Value) != userId || Guid.Parse(claim.Value) != room.f_owner_id)
+                if (userData.id != userId || userData.id != room.f_owner_id)
                     throw new ArgumentException("USER_CANT_BE_REMOVED_FROM_ROOM_PROBLEM");
 
                 var roomUsers = _dataBaseConnection.RoomUsers.FirstOrDefault(q => q.id == userId && q.f_room_id == roomId);

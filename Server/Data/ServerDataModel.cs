@@ -29,7 +29,7 @@
         public string c_nickname { get; set; }
         public string c_email { get; set; }
         public DateOnly d_registrationdate { get; set; }
-        public Role FRole { get; set; }
+        public Role f_role { get; set; }
         public bool b_emailconfirmed { get; set; }
 
         public User()
