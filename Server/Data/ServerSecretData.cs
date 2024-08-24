@@ -29,11 +29,11 @@ namespace Server.Data
         }
         public static string GetIssuer()
         {
-            return _baseUrl;
+            return _issuer;
         }
         public static string GetAudience()
         {
-            return _baseUrl;
+            return _audience;
         }
     }
 }

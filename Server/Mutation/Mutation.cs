@@ -1,10 +1,12 @@
-﻿using HotChocolate.Authorization;
+﻿using System.Diagnostics;
+using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Helpers;
 using System.IdentityModel.Tokens.Jwt;
+using System.Xml.Linq;
 
 namespace GraphQLServer
 {
@@ -19,7 +21,7 @@ namespace GraphQLServer
             _dataBaseConnection = new DataBaseConnection();
         }
 
-        public async Task<string> CreateUser(UserForCreate user, string roleName)
+        public async Task<string> CreateUser(UserForCreate user, string roleName = "User")
         {
             var usr = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.c_email == user.c_email || q.c_nickname == user.c_nickname);
             if (usr != null)
@@ -33,7 +35,7 @@ namespace GraphQLServer
                 c_nickname = user.c_nickname,
                 c_email = user.c_email,
                 c_password = Helpers.ComputeHash(user.c_password),
-                d_registrationdate = DateOnly.FromDateTime(DateTime.Today),
+                d_registration_date = DateTime.UtcNow,
             };
 
             var role = _dataBaseConnection.Roles.FirstOrDefault(q => q.c_dev_name == roleName);
@@ -43,14 +45,23 @@ namespace GraphQLServer
             var newToken = new AuthorizationToken();
             newToken.c_token = new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(usr.id.ToString()));
             newToken.c_hash = Helpers.ComputeHash(newToken.c_token);
-            usr.f_authorizationtoken = (Guid)newToken.id;
+            usr.f_authorization_token = (Guid)newToken.id;
 
-            await _dataBaseConnection.AuthorizationTokens.AddAsync(newToken);
+            await _dataBaseConnection.Authorization.AddAsync(newToken);
+            await _dataBaseConnection.SaveChangesAsync();
             await _dataBaseConnection.Users.AddAsync(usr);
 
-            await _dataBaseConnection.SaveChangesAsync();
-            return newToken.c_token;
+            try
+            {
+                await _dataBaseConnection.SaveChangesAsync();
+            }
+            catch (Exception EX_NAME)
+            {
+                Debug.WriteLine(EX_NAME.Message);
+            }
 
+            
+            return newToken.c_token;
         }
 
         public async Task<string> TryRefreshToken(string oldToken)
@@ -65,7 +76,7 @@ namespace GraphQLServer
             var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(u => u.id.ToString() == claim.Value);
             if (user == null) throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
-            var authorizationToken = await _dataBaseConnection.AuthorizationTokens.FirstOrDefaultAsync(q => q.id == user.f_authorizationtoken);
+            var authorizationToken = await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
             if (authorizationToken == null) throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
             var recivedTokenHash = Helpers.ComputeHash(oldToken);

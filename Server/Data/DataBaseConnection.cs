@@ -9,7 +9,7 @@ namespace Server.Data;
 public class DataBaseConnection : DbContext
 {
     public DbSet<UserData> Users { get; set; }
-    public DbSet<AuthorizationToken> AuthorizationTokens { get; set; }
+    public DbSet<AuthorizationToken> Authorization { get; set; }
     public DbSet<RecoveryCodes> RecoveryCodes { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<RoomChat> RoomChat { get; set; }
@@ -33,6 +33,6 @@ public class DataBaseConnection : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         //строка подключения к бд
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=RTS;Username=postgres;Password=123");
+        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=RoleGame;Username=postgres;Password=123");
     }
 }

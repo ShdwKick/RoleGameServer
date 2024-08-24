@@ -50,8 +50,8 @@ namespace GraphQLServer
                 id = userData.id,
                 c_nickname = userData.c_nickname,
                 c_email = userData.c_email,
-                b_emailconfirmed = userData.b_emailconfirmed,
-                d_registrationdate = userData.d_registrationdate,
+                b_is_mail_confirmed = userData.b_is_mail_confirmed,
+                d_registration_date = userData.d_registration_date,
                 f_role = await _dataBaseConnection.Roles.FirstOrDefaultAsync(q => q.id == userData.f_role),
             };
             return user;
@@ -67,7 +67,7 @@ namespace GraphQLServer
 
             var token = new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(user.id.ToString()));
 
-            var authorizationToken = await _dataBaseConnection.AuthorizationTokens.FirstOrDefaultAsync(q => q.id == user.f_authorizationtoken);
+            var authorizationToken = await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
             if (authorizationToken == null) 
                 throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
@@ -186,13 +186,13 @@ namespace GraphQLServer
 
                 await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
                 {
-                    c_email = address,
+                    c_email = user.c_email,
                     n_code = code,
                     id = Guid.NewGuid(),
                     d_expiration_time = DateTime.UtcNow.AddMinutes(5),
                 });
 
-                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendConfirmationMail?address={Uri.EscapeDataString(address)}";
+                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendConfirmationMail?address={Uri.EscapeDataString(user.c_email)}";
                 HttpContent content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.PostAsync(url, content);
 

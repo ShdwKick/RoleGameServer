@@ -13,10 +13,10 @@
         public string c_nickname { get; set; }
         public string c_email { get; set; }
         public string c_password { get; set; }
-        public DateOnly d_registrationdate { get; set; }
-        public Guid f_authorizationtoken { get; set; }
+        public DateTimeOffset d_registration_date { get; set; }
+        public Guid f_authorization_token { get; set; }
         public Guid f_role { get; set; }
-        public bool b_emailconfirmed { get; set; }
+        public bool b_is_mail_confirmed { get; set; }
 
         public UserData()
         {
@@ -28,9 +28,9 @@
         public Guid? id { get; set; }
         public string c_nickname { get; set; }
         public string c_email { get; set; }
-        public DateOnly d_registrationdate { get; set; }
+        public DateTimeOffset d_registration_date { get; set; }
         public Role f_role { get; set; }
-        public bool b_emailconfirmed { get; set; }
+        public bool b_is_mail_confirmed { get; set; }
 
         public User()
         {
@@ -46,8 +46,7 @@
     }
     
     public class Role
-    {
-        public Guid? id { get; set; }
+    { public Guid? id { get; set; }
         public string c_name { get; set; }
         public string c_dev_name { get; set; }
         public string c_description { get; set; }
