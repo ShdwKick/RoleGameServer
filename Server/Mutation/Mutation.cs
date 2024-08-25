@@ -48,7 +48,7 @@ namespace GraphQLServer
             usr.f_authorization_token = (Guid)newToken.id;
 
             await _dataBaseConnection.Authorization.AddAsync(newToken);
-            await _dataBaseConnection.SaveChangesAsync();
+            //await _dataBaseConnection.SaveChangesAsync();
             await _dataBaseConnection.Users.AddAsync(usr);
 
             try
@@ -62,6 +62,14 @@ namespace GraphQLServer
 
             
             return newToken.c_token;
+        }
+
+        //TODO: убрать после тестирования регистрации
+        public async Task DeleteAllUsers()
+        {
+            _dataBaseConnection.Users.ExecuteDelete();
+            await _dataBaseConnection.SaveChangesAsync();
+
         }
 
         public async Task<string> TryRefreshToken(string oldToken)
