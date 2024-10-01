@@ -17,6 +17,9 @@
         public Guid f_authorization_token { get; set; }
         public Guid f_role { get; set; }
         public bool b_is_mail_confirmed { get; set; }
+        public string c_yandex_token { get; set; }
+        public string c_vk_token { get; set; }
+        public string c_google_token { get; set; }
 
         public UserData()
         {
@@ -43,8 +46,12 @@
         public string c_nickname { get; set; }
         public string c_email { get; set; }
         public string c_password { get; set; }
+        public string c_yandex_token { get; set; }
+        public string c_vk_token { get; set; }
+        public string c_google_token { get; set; }
+
     }
-    
+
     public class Role
     { public Guid? id { get; set; }
         public string c_name { get; set; }
