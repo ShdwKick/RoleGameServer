@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Server.Data.Helpers;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 
 namespace GraphQLServer
 {
@@ -38,6 +39,8 @@ namespace GraphQLServer
         {
             return DateTime.UtcNow;
         }
+
+
 
 
         [Authorize]
@@ -74,27 +77,6 @@ namespace GraphQLServer
                 f_role = await _dataBaseConnection.Roles.FirstOrDefaultAsync(q => q.id == userData.f_role),
             };
             return user;
-        }
-
-        public async Task<string> LoginUser(string login, string password)
-        {
-            string passwordHash = Helpers.ComputeHash(password);
-
-            var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.c_email == login && q.c_password == passwordHash);
-            if (user == null)
-                throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
-
-            var token = new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(user.id.ToString()));
-
-            var authorizationToken = await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
-            if (authorizationToken == null) 
-                throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
-
-            authorizationToken.c_token = token;
-            authorizationToken.c_hash = Helpers.ComputeHash(authorizationToken.c_token);
-            await _dataBaseConnection.SaveChangesAsync();
-
-            return token;
         }
 
         [Authorize]
@@ -147,6 +129,7 @@ namespace GraphQLServer
 
         }
 
+
         public async Task<bool> SendRecoveryEmail(string address)
         {
             try
@@ -159,7 +142,6 @@ namespace GraphQLServer
                 Random random = new Random();
                 int code = random.Next(100000, 999999);
 
-
                 await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
                 {
                     c_email = address,
@@ -168,9 +150,22 @@ namespace GraphQLServer
                     d_expiration_time = DateTime.UtcNow.AddMinutes(5),
                 });
 
-                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendRecoveryMail?address={Uri.EscapeDataString(address)}&code={Uri.EscapeDataString(code.ToString())}";
-                HttpContent content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendRecoveryMail";
+
+                // Создаем объект RecoveryMessage и сериализуем его в JSON
+                var recoveryMessage = new
+                {
+                    address = address,
+                    code = code.ToString()
+                };
+
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(recoveryMessage),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                HttpResponseMessage response = await _httpClient.PostAsync(url, jsonContent);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -190,6 +185,7 @@ namespace GraphQLServer
             }
         }
 
+
         public async Task<bool> SendEmailConfirmationEMail()
         {
             try
@@ -202,6 +198,54 @@ namespace GraphQLServer
                 Random random = new Random();
                 int code = random.Next(100000, 999999);
 
+                await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
+                {
+                    c_email = user.c_email,
+                    n_code = code,
+                    id = Guid.NewGuid(),
+                    d_expiration_time = DateTime.UtcNow.AddMinutes(5),
+                });
+
+                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendConfirmationMail";
+
+                // Подготовка содержимого запроса с адресом электронной почты в теле
+                var emailContent = new StringContent(
+                    JsonSerializer.Serialize(user.c_email),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                HttpResponseMessage response = await _httpClient.PostAsync(url, emailContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Email sent successfully.");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to send email. Status code: {response.StatusCode}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception occurred while sending email: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SendNewsEMail(Guid newsGuid)
+        {
+            try
+            {
+                var user = await Helpers.GetUserFromHeader(_dataBaseConnection, _httpContextAccessor);
+
+                if (user == null)
+                    throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
+
+                Random random = new Random();
+                int code = random.Next(100000, 1000000);
 
                 await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
                 {
@@ -211,9 +255,16 @@ namespace GraphQLServer
                     d_expiration_time = DateTime.UtcNow.AddMinutes(5),
                 });
 
-                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendConfirmationMail?address={Uri.EscapeDataString(user.c_email)}";
-                HttpContent content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+                string url = $"{ServerSecretData.GetBaseUrl()}:7111/EmailSender/SendConfirmationMail";
+
+                // Подготовка содержимого запроса с адресом электронной почты в теле
+                var emailContent = new StringContent(
+                    JsonSerializer.Serialize(user.c_email),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                HttpResponseMessage response = await _httpClient.PostAsync(url, emailContent);
 
                 if (response.IsSuccessStatusCode)
                 {
