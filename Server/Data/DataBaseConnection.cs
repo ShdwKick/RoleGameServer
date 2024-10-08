@@ -1,8 +1,4 @@
-﻿using System.Data;
-using System.Diagnostics.Eventing.Reader;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Npgsql;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Server.Data;
 

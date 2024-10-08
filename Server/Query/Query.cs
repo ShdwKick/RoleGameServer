@@ -157,7 +157,7 @@ namespace GraphQLServer
                     throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
 
                 Random random = new Random();
-                int code = random.Next(100000, 1000000);
+                int code = random.Next(100000, 999999);
 
 
                 await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
@@ -200,7 +200,7 @@ namespace GraphQLServer
                     throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
 
                 Random random = new Random();
-                int code = random.Next(100000, 1000000);
+                int code = random.Next(100000, 999999);
 
 
                 await _dataBaseConnection.RecoveryCodes.AddAsync(new RecoveryCodes()
