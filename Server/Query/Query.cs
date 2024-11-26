@@ -21,12 +21,12 @@ namespace GraphQLServer
         private readonly DataBaseConnection _dataBaseConnection;
         public Guid GlobalChatGuid { get; set; }
 
-        public Query(IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
+        public Query(IHttpContextAccessor httpContextAccessor, IMemoryCache cache, DataBaseConnection dataBaseConnection)
         {
             _httpClient = new HttpClient();
             _httpContextAccessor = httpContextAccessor;
             _cache = cache;
-            _dataBaseConnection = new DataBaseConnection();
+            _dataBaseConnection = dataBaseConnection;
         }
 
 

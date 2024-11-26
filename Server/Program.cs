@@ -2,10 +2,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using GraphQLServer.Services.RecoveryService;
+using GraphQLServer.Services.RoomService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.WebSockets;
 using Server.Data;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Server.Services;
 
 namespace GraphQLServer
 {
@@ -14,10 +18,40 @@ namespace GraphQLServer
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            
+            // Настройка авторизации
+            builder.Services.AddAuthorization();
+            
+            builder.Services.AddScoped<Query>();
+            builder.Services.AddScoped<Mutation>();
+            builder.Services.AddScoped<Subsription>();
+            
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddWebSockets(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(120);
+            });
 
-            // Получаем ключ безопасности из ServerSecretData
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ServerSecretData.GetSecurityKey()));
+            builder.Services.AddGraphQLServer()
+                .AddQueryType<Query>()
+                .AddMutationType<Mutation>()
+                .AddSubscriptionType<Subsription>()
+                .AddInMemorySubscriptions()
+                .AddAuthorization();
+            
+            
+            builder.Services.AddScoped<DataBaseConnection>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IRoomService, RoomService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            
+            var key = builder.Configuration["AppSettings:ServerKey"];
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
+            
             // Настройка аутентификации JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -42,27 +76,6 @@ namespace GraphQLServer
                     };
                 });
 
-            // Настройка авторизации
-            builder.Services.AddAuthorization();
-
-            // Добавление GraphQL
-            builder.Services.AddScoped<Query>();
-            builder.Services.AddScoped<Mutation>();
-            builder.Services.AddScoped<Subsription>();
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddMemoryCache();
-            builder.Services.AddWebSockets(options =>
-            {
-                options.KeepAliveInterval = TimeSpan.FromSeconds(120);
-            });
-
-            builder.Services.AddGraphQLServer()
-                .AddQueryType<Query>()
-                .AddMutationType<Mutation>()
-                .AddSubscriptionType<Subsription>()
-                .AddInMemorySubscriptions()
-                .AddAuthorization();
-
             builder.WebHost.ConfigureKestrel(options =>
             {
                 options.ListenAnyIP(5000);
@@ -72,6 +85,7 @@ namespace GraphQLServer
                 });
             });
 
+            
             var app = builder.Build();
 
             //app.UseHttpsRedirection();

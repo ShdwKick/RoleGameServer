@@ -6,14 +6,19 @@ namespace GraphQLServer
 {
     public class Subsription
     {
+        private readonly DataBaseConnection _dataBaseConnection;
+
+        public Subsription(DataBaseConnection dataBaseConnection)
+        {
+            _dataBaseConnection = dataBaseConnection;
+        }
+
+
         [Subscribe(With = nameof(SubscribeToMessagesByChatId))]
         [Topic("Chat_{chatId}")]
         public Task<Message> OnMessageReceived([EventMessage] Message Message)
         {
-            using (DataBaseConnection _dataBaseConnection = new DataBaseConnection())
-            {
-                return Task.FromResult(Message);
-            }
+            return Task.FromResult(Message);
         }
         
         public ValueTask<ISourceStream<Message>> SubscribeToMessagesByChatId(Guid chatId, [Service] ITopicEventReceiver eventReceiver)
@@ -25,10 +30,7 @@ namespace GraphQLServer
         [Topic("Room_{chatId}")]
         public Task<Message> OnRoomUserListChangeReceived([EventMessage] Message Message)
         {
-            using (DataBaseConnection _dataBaseConnection = new DataBaseConnection())
-            {
-                return Task.FromResult(Message);
-            }
+            return Task.FromResult(Message);
         }
 
         public ValueTask<ISourceStream<RoomUserListChange>> SubscribeToRoomUsersListChanged(Guid roomId, [Service] ITopicEventReceiver eventReceiver)

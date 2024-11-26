@@ -15,10 +15,10 @@ namespace GraphQLServer
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly DataBaseConnection _dataBaseConnection;
 
-        public Mutation(IHttpContextAccessor httpContextAccessor)
+        public Mutation(IHttpContextAccessor httpContextAccessor, DataBaseConnection dataBaseConnection)
         {
             _httpContextAccessor = httpContextAccessor;
-            _dataBaseConnection = new DataBaseConnection();
+            _dataBaseConnection = dataBaseConnection;
         }
 
         public async Task<string> CreateUser(UserForCreate user, Guid roleGuid)

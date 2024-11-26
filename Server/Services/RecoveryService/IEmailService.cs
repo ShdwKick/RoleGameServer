@@ -1,6 +1,6 @@
 ﻿namespace GraphQLServer.Services.RecoveryService;
 
-public class RecoveryService
+public interface IEmailService
 {
     
 }

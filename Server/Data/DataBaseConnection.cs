@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Server.Data;
 
@@ -19,9 +20,11 @@ public class DataBaseConnection : DbContext
     public DbSet<Stats> Stats { get; set; }
     public DbSet<Room> Room { get; set; }
     public DbSet<RoomUsers> RoomUsers { get; set; }
+    private readonly string _connectionString;
 
-    public DataBaseConnection()
+    public DataBaseConnection(IConfiguration config)
     {
+        _connectionString = config.GetConnectionString("DefaultConnection");
         //подключение к бд
         Database.EnsureCreated();
     }

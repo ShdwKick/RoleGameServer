@@ -3,16 +3,27 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace Server.Data
 {
     public class ServerSecretData
     {
-        private static string _hashSalt { get; set; } = "RoleGameHashSalt";
-        private static string _baseUrl { get; set; } = "https://localhost";
-        private static string _serverKey { get; set; } = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("RoleGameSecretKey")).ToString();
-        private static string _issuer = "RoleGameServer";
-        private static string _audience = "RoleGameClient";
+        private static string _hashSalt;
+        private static string _baseUrl;
+        private static string _serverKey;
+        private static string _issuer;
+        private static string _audience;
+
+
+        public ServerSecretData(IConfiguration config)
+        {
+            _hashSalt = config["AppSettings:HashSalt"];
+            _baseUrl = config["AppSettings:BaseUrl"];
+            _serverKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AppSettings:ServerKey"])).ToString();
+            _issuer = config["AppSettings:Issuer"];
+            _audience = config["AppSettings:Audience"];
+        }
 
         public static string GetSalt()
         {
