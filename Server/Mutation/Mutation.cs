@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
+using System.Xml.Linq;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Helpers;
-using System.IdentityModel.Tokens.Jwt;
-using System.Xml.Linq;
 
 namespace GraphQLServer
 {

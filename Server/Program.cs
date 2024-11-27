@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Text;
+using Server.Services.EmailService;
+using Server.Services.RoomService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.WebSockets;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using GraphQLServer.Services.RecoveryService;
-using GraphQLServer.Services.RoomService;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.WebSockets;
 using Server.Data;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Server.Services;
+using Server.Services.UserService;
 
 namespace GraphQLServer
 {
@@ -21,8 +21,6 @@ namespace GraphQLServer
             
             builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
             
-            // Настройка авторизации
-            builder.Services.AddAuthorization();
             
             builder.Services.AddScoped<Query>();
             builder.Services.AddScoped<Mutation>();
@@ -52,6 +50,8 @@ namespace GraphQLServer
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
             
+            // Настройка авторизации
+            builder.Services.AddAuthorization();
             // Настройка аутентификации JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
