@@ -7,6 +7,7 @@ using Server.Data;
 using Server.Data.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Xml.Linq;
+using GraphQLServer.Services.RecoveryService;
 
 namespace GraphQLServer
 {
@@ -14,20 +15,34 @@ namespace GraphQLServer
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly DataBaseConnection _dataBaseConnection;
+        private readonly IEmailService _emailService;
 
-        public Mutation(IHttpContextAccessor httpContextAccessor, DataBaseConnection dataBaseConnection)
+        public Mutation(IHttpContextAccessor httpContextAccessor, DataBaseConnection dataBaseConnection,
+            IEmailService emailService)
         {
             _httpContextAccessor = httpContextAccessor;
             _dataBaseConnection = dataBaseConnection;
+            _emailService = emailService;
+        }
+
+        public async Task<bool> SendRecoveryEmail(string address)
+        {
+            return await _emailService?.SendRecoveryEmail(address);
+        }
+
+        public async Task<bool> SendEmailConfirmationEMail()
+        {
+            return await _emailService?.SendEmailConfirmationEMail();
         }
 
         public async Task<string> CreateUser(UserForCreate user, Guid roleGuid)
         {
-            var usr = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.c_email == user.c_email || q.c_nickname == user.c_nickname);
+            var usr = await _dataBaseConnection.Users.FirstOrDefaultAsync(q =>
+                q.c_email == user.c_email || q.c_nickname == user.c_nickname);
             if (usr != null)
             {
                 throw new ArgumentException("EMAIL_OR_NAME_EXIST_PROBLEM");
-            };
+            }
 
             usr = new UserData
             {
@@ -42,7 +57,7 @@ namespace GraphQLServer
             };
 
             var role = _dataBaseConnection.Roles.FirstOrDefault(q => q.id == roleGuid);
-            if(role == null)
+            if (role == null)
                 role = _dataBaseConnection.Roles.FirstOrDefault(q => q.c_dev_name == "User");
 
             if (role != null)
@@ -66,7 +81,7 @@ namespace GraphQLServer
                 Debug.WriteLine(EX_NAME.Message);
             }
 
-            
+
             return newToken.c_token;
         }
 
@@ -75,7 +90,8 @@ namespace GraphQLServer
         {
             string passwordHash = Helpers.ComputeHash(password);
 
-            var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.c_email == login && q.c_password == passwordHash);
+            var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(q =>
+                q.c_email == login && q.c_password == passwordHash);
             if (user == null)
                 throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
 
@@ -118,7 +134,8 @@ namespace GraphQLServer
         {
             var token = new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(user.id.ToString()));
 
-            var authorizationToken = await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
+            var authorizationToken =
+                await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
             if (authorizationToken == null)
                 throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
@@ -148,7 +165,8 @@ namespace GraphQLServer
             var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(u => u.id.ToString() == claim.Value);
             if (user == null) throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
-            var authorizationToken = await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
+            var authorizationToken =
+                await _dataBaseConnection.Authorization.FirstOrDefaultAsync(q => q.id == user.f_authorization_token);
             if (authorizationToken == null) throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
 
             var recivedTokenHash = Helpers.ComputeHash(oldToken);
@@ -156,11 +174,11 @@ namespace GraphQLServer
                 throw new ArgumentException("CORRUPTED_TOKEN_DETECTED_PROBLEM");
 
 
-            authorizationToken.c_token = new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(user.id.ToString()));
+            authorizationToken.c_token =
+                new JwtSecurityTokenHandler().WriteToken(Helpers.GenerateNewToken(user.id.ToString()));
             authorizationToken.c_hash = Helpers.ComputeHash(authorizationToken.c_token);
             await _dataBaseConnection.SaveChangesAsync();
             return authorizationToken.c_token;
-
         }
 
         public async Task<bool> PasswordRecovery(string email, string code, string newPassword)
@@ -182,7 +200,6 @@ namespace GraphQLServer
             user.c_password = Helpers.ComputeHash(newPassword);
             await _dataBaseConnection.SaveChangesAsync();
             return true;
-
         }
 
         [Authorize]
@@ -198,7 +215,6 @@ namespace GraphQLServer
             user.c_password = Helpers.ComputeHash(newPassword);
             await _dataBaseConnection.SaveChangesAsync();
             return true;
-
         }
 
         [Authorize]
@@ -209,7 +225,8 @@ namespace GraphQLServer
                 throw new ArgumentException("EMPTY_MESSAGE_SENDER_OR_CHAT_GUID_PROBLEM");
             }
 
-            var chat = await _dataBaseConnection.PrivateChat.FirstOrDefaultAsync(q => q.f_firstuser == firstuserId && q.f_seconduser == seconduserId);
+            var chat = await _dataBaseConnection.PrivateChat.FirstOrDefaultAsync(q =>
+                q.f_firstuser == firstuserId && q.f_seconduser == seconduserId);
 
             if (chat == null)
             {
@@ -222,9 +239,10 @@ namespace GraphQLServer
                 _dataBaseConnection.PrivateChat.Add(chat);
                 await _dataBaseConnection.SaveChangesAsync();
             }
-            return (Guid)chat.id;
 
+            return (Guid)chat.id;
         }
+
         [Authorize]
         public async Task<Guid> CreateRoom(CreateRoom room)
         {
@@ -232,6 +250,7 @@ namespace GraphQLServer
             {
                 throw new ArgumentException("EMPTY_OWNER_ID_PROBLEM");
             }
+
             var user = await _dataBaseConnection.Users.FirstOrDefaultAsync(q => q.id == room.f_owner_id);
             if (user == null)
                 throw new ArgumentException("ROOM_NOT_EXIST_PROBLEM");
@@ -282,7 +301,6 @@ namespace GraphQLServer
             if (room == null)
                 throw new ArgumentException("ROOM_NOT_FOUND_PROBLEM");
 
-            
 
             if (Guid.Parse(claim.Value) != room.f_owner_id)
                 throw new ArgumentException("USER_NOT_OWNER_PROBLEM");
@@ -293,11 +311,11 @@ namespace GraphQLServer
             if (roomUsers != null || roomUsers.Any())
                 _dataBaseConnection.RoomUsers.RemoveRange(roomUsers);
             await _dataBaseConnection.SaveChangesAsync();
-
         }
 
         [Authorize]
-        public async Task ChangeRoomUsersList(Guid userId, Guid roomId, bool IsNeedAdd, [Service] ITopicEventSender eventSender, CancellationToken cancellationToken)
+        public async Task ChangeRoomUsersList(Guid userId, Guid roomId, bool IsNeedAdd,
+            [Service] ITopicEventSender eventSender, CancellationToken cancellationToken)
         {
             var userData = await Helpers.GetUserFromHeader(_dataBaseConnection, _httpContextAccessor);
 
@@ -325,9 +343,10 @@ namespace GraphQLServer
                 if (userData.id != userId || userData.id != room.f_owner_id)
                     throw new ArgumentException("USER_CANT_BE_REMOVED_FROM_ROOM_PROBLEM");
 
-                var roomUsers = _dataBaseConnection.RoomUsers.FirstOrDefault(q => q.id == userId && q.f_room_id == roomId);
+                var roomUsers =
+                    _dataBaseConnection.RoomUsers.FirstOrDefault(q => q.id == userId && q.f_room_id == roomId);
 
-                if(roomUsers == null)
+                if (roomUsers == null)
                     throw new ArgumentException("ROOM_USER_NOT_EXIST_PROBLEM");
 
                 _dataBaseConnection.RoomUsers.Remove(roomUsers);
@@ -342,20 +361,22 @@ namespace GraphQLServer
 
             await eventSender.SendAsync($"Chat_{roomId}", change, cancellationToken);
             await _dataBaseConnection.SaveChangesAsync();
-
         }
 
         [Authorize]
-        public async Task<Message> SendMessageAsync(Message msg, Guid senderId, Guid chatId, [Service] ITopicEventSender eventSender, CancellationToken cancellationToken)
+        public async Task<Message> SendMessageAsync(Message msg, Guid senderId, Guid chatId,
+            [Service] ITopicEventSender eventSender, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(msg.c_content))
             {
                 throw new ArgumentException("EMPTY_MESSAGE_CONTENT_PROBLEM");
             }
+
             if (senderId == Guid.Empty || chatId == Guid.Empty)
             {
                 throw new ArgumentException("EMPTY_MESSAGE_SENDER_OR_CHAT_GUID_PROBLEM");
             }
+
             _dataBaseConnection.Message.Add(msg);
             await _dataBaseConnection.SaveChangesAsync(cancellationToken);
 

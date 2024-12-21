@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,7 +17,6 @@ namespace Server.Data.Helpers
 {
     public class Helpers
     {
-
         public static string GetTokenFromHeader(IHttpContextAccessor httpContextAccessor)
         {
             if (httpContextAccessor == null)
@@ -45,6 +45,7 @@ namespace Server.Data.Helpers
                 {
                     builder.Append(hashBytes[i].ToString("x2"));
                 }
+
                 return builder.ToString();
             }
         }
@@ -70,7 +71,8 @@ namespace Server.Data.Helpers
             return newToken;
         }
 
-        public static async Task<UserData> GetUserFromHeader(DataBaseConnection db, IHttpContextAccessor httpContextAccessor)
+        public static async Task<UserData> GetUserFromHeader(DataBaseConnection db,
+            IHttpContextAccessor httpContextAccessor)
         {
             var token = GetTokenFromHeader(httpContextAccessor);
             var jwtToken = new JwtSecurityTokenHandler().ReadToken(token) as JwtSecurityToken;
@@ -87,6 +89,31 @@ namespace Server.Data.Helpers
                 throw new ArgumentException("USER_NOT_FOUND_PROBLEM");
 
             return user;
+        }
+
+        public static int GenerateCode()
+        {
+            Random random = new Random();
+            return random.Next(100000, 999999);
+        }
+
+        public static StringContent GenerateEmailCodeJson(string address, int code = -1)
+        {
+            if (code < 0)
+            {
+                code = GenerateCode();
+            }
+
+            var recoveryMessage = new
+            {
+                address = address,
+                code = code.ToString()
+            };
+
+            return new StringContent(
+                JsonSerializer.Serialize(recoveryMessage),
+                Encoding.UTF8, "application/json"
+            );
         }
     }
 }

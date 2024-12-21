@@ -2,7 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using GraphQLServer.Services.ChatService;
 using GraphQLServer.Services.RecoveryService;
+using GraphQLServer.Services.RoleService;
 using GraphQLServer.Services.RoomService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.WebSockets;
@@ -27,7 +29,15 @@ namespace GraphQLServer
             builder.Services.AddScoped<Query>();
             builder.Services.AddScoped<Mutation>();
             builder.Services.AddScoped<Subsription>();
-            
+            builder.Services.AddScoped<DataBaseConnection>(); 
+            builder.Services.AddHttpClient();
+
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IRoomService, RoomService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
             builder.Services.AddWebSockets(options =>
@@ -43,14 +53,12 @@ namespace GraphQLServer
                 .AddAuthorization();
             
             
-            builder.Services.AddScoped<DataBaseConnection>();
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IRoomService, RoomService>();
-            builder.Services.AddScoped<IEmailService, EmailService>();
             
-            var key = builder.Configuration["AppSettings:ServerKey"];
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-
+            
+            
+            //var key = builder.Configuration["AppSettings:ServerKey"];
+            //var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ServerSecretData.GetSecurityKey()));
             
             // Настройка аутентификации JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
