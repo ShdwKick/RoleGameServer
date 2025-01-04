@@ -13,7 +13,6 @@ namespace GraphQLServer
             _dataBaseConnection = dataBaseConnection;
         }
 
-
         [Subscribe(With = nameof(SubscribeToMessagesByChatId))]
         [Topic("Chat_{chatId}")]
         public Task<Message> OnMessageReceived([EventMessage] Message Message)

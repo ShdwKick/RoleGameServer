@@ -9,6 +9,7 @@ namespace Server.Data
 {
     public class ServerSecretData
     {
+        //TODO: перенести в конгфиг файл
         private static string _hashSalt { get; set; } = "RoleGameHashSalt";
         private static string _baseUrl { get; set; } = "https://localhost";
 
@@ -17,17 +18,7 @@ namespace Server.Data
 
         private static string _issuer = "RoleGameServer";
         private static string _audience = "RoleGameClient";
-
-
-        public ServerSecretData(IConfiguration config)
-        {
-            // _hashSalt = config["AppSettings:HashSalt"];
-            // _baseUrl = config["AppSettings:BaseUrl"];
-            // _serverKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AppSettings:ServerKey"])).ToString();
-            // _issuer = config["AppSettings:Issuer"];
-            // _audience = config["AppSettings:Audience"];
-        }
-
+        
         public static string GetSalt()
         {
             return _hashSalt;
