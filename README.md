@@ -1,8 +1,5 @@
-# GraphQL Server with HotChocolate 
-
 [Eng](#GraphQL-Server-with-HotChocolate) / [Ru](#GraphQL-сервер-с-HotChocolate)
-   
-
+# GraphQL Server with HotChocolate 
 
 This project is a GraphQL server written in C# utilizing the HotChocolate library. It is designed to provide an efficient, flexible API for interacting with a PostgreSQL database, handle complex queries, and facilitate real-time data updates via subscriptions. Additionally, the server integrates with a microservice for sending email notifications via HTTPS requests.
 
