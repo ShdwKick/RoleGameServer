@@ -1,6 +1,6 @@
 # Introduction / Введение
 1. [About](#GraphQL-Server-with-HotChocolate) / [О проекте](#GraphQL-Server-with-HotChocolate)
-2. [Features](##Features) / [Возможности](##Возможности)
+2. [Features](##-Features) / [Возможности](##Возможности)
 3. [Technologies Used](##Technologies-Used) / [Используемые технологии](##Используемые-технологии)
 4. [Installation](##Installation) / [Установка](##Установка)
 5. [Usage](##Usage) / [Использование](##Использование)
