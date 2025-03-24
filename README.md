@@ -1,4 +1,4 @@
-#Warning! The project is no longer relevant. Major changes to its structure and architecture are planned.
+# Warning! The project is no longer relevant. Major changes to its structure and architecture are planned.
 
 [Eng](#GraphQL-Server-with-HotChocolate) / [Ru](#GraphQL-сервер-с-HotChocolate)
 # GraphQL Server with HotChocolate 
